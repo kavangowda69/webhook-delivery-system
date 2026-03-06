@@ -1,6 +1,6 @@
 services:
 
-  postgres:
+  webhook_postgres:
     image: postgres:15
     container_name: webhook_postgres
     environment:
@@ -9,8 +9,17 @@ services:
       POSTGRES_DB: webhook_db
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webhook_user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-volumes:
-  postgres_data:
+  webhook_api:
+    build: .
+    container_name: webhook_api
+    ports:
+      - "8000:8000"
+    depends_on:
+      webhook_postgres:
+        condition: service_healthy
